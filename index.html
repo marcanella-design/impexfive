@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>IMPEX FIVE v12 FINAL - 2 PDFs</title>
+<meta name="theme-color" content="#0028B4">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+body{font-family:sans-serif;background:#e5e7eb}
+canvas.sig{border:2px dashed #0028B4;border-radius:12px;background:#fff;width:100%;touch-action:none}
+.photo-thumb{width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #e5e7eb}
+.logo{background:#0028B4;color:white;padding:12px;border-radius:12px;text-align:center;font-weight:900;font-size:20px}
+.logo span{color:#E30613;background:white;padding:2px 6px;border-radius:6px}
+</style>
+</head>
+<body class="flex justify-center">
+<div class="w-full max-w-[500px] bg-white min-h-screen flex flex-col">
+<div id="s-login" class="flex-1 bg-[#0028B4] flex flex-col p-6 justify-center">
+<div class="bg-white rounded-[24px] p-6">
+<div class="logo">IMPEX <span>FIVE</span><div style="font-size:9px;font-weight:400;margin-top:4px">IMPORTADORA E DISTRIBUIDORA</div></div>
+<h2 class="text-center font-black text-[#0028B4] text-sm mt-3">SISTEMA ENTREGA NFe</h2>
+<p class="text-center text-[10px] text-gray-500 mb-4">v12 - 2 PDFs Separados</p>
+<input id="user" value="operador" class="w-full border rounded-xl px-3 py-3 mb-2 text-sm">
+<input id="pass" type="password" value="123456" class="w-full border rounded-xl px-3 py-3 mb-3 text-sm">
+<button onclick="login()" class="w-full bg-[#E30613] text-white font-black rounded-xl py-3">ENTRAR</button>
+</div>
+</div>
+<div id="s-home" class="hidden flex-1 flex-col bg-[#F5F7FB]">
+<div class="bg-white p-4 flex justify-between border-b"><b class="text-[#0028B4] text-xs">IMPEX FIVE v12</b><span id="stat-hoje" class="text-[9px] bg-green-100 px-2 py-1 rounded-full">0</span></div>
+<div class="p-4">
+<button onclick="showScreen('new')" class="w-full bg-[#0028B4] text-white rounded-xl p-4 mb-3 text-left"><b>📦 NOVA ENTREGA</b><br><span class="text-xs opacity-70">Foto NF + Guia - 2 PDFs</span></button>
+<h3 class="font-bold text-xs mt-2 mb-2">Histórico</h3>
+<div id="home-list"></div>
+</div>
+<div class="bg-white border-t flex justify-around py-3 text-[11px]"><span class="text-[#0028B4] font-black">🏠 Início</span><button onclick="showScreen('history')" class="text-gray-400">📋 Histórico</button></div>
+</div>
+<div id="s-new" class="hidden flex-1 flex-col bg-white overflow-auto">
+<div class="p-3 border-b flex gap-2 items-center sticky top-0 bg-white z-10"><button onclick="showScreen('home')" class="w-8 h-8 bg-gray-100 rounded-full">←</button><b class="text-sm">NOVA ENTREGA v12</b></div>
+<div class="p-4 space-y-3">
+<div class="grid grid-cols-2 gap-2"><input id="f-num" class="bg-gray-100 rounded-xl px-3 py-2 text-xs font-mono" readonly><input id="f-date" class="bg-gray-100 rounded-xl px-3 py-2 text-[10px]" readonly></div>
+<input id="f-nf" placeholder="Número NFe *" class="w-full border rounded-xl px-3 py-3 text-sm">
+<input id="f-chave" placeholder="Chave NFe 44 dígitos" maxlength="44" class="w-full border-2 border-blue-500 rounded-xl px-3 py-3 text-xs font-mono">
+<input id="f-cliente" placeholder="Cliente *" class="w-full border rounded-xl px-3 py-3 text-sm">
+<input id="f-cnpj" placeholder="CNPJ" class="w-full border rounded-xl px-3 py-3 text-sm">
+<input id="f-mot" placeholder="Motorista *" class="w-full border rounded-xl px-3 py-3 text-sm">
+<input id="f-placa" placeholder="Placa *" class="w-full border rounded-xl px-3 py-3 text-sm">
+<div class="grid grid-cols-2 gap-2"><input id="f-vol" placeholder="Volumes *" class="border rounded-xl px-3 py-3 text-sm"><input id="f-peso" placeholder="Peso" class="border rounded-xl px-3 py-3 text-sm"></div>
+
+<div class="border-2 border-orange-400 bg-orange-50 rounded-xl p-3">
+<b class="text-[11px] text-orange-700">📸 FOTOS DA NF (OBRIGATÓRIO - VAI EM PDF SEPARADO EM PÉ)</b>
+<p class="text-[9px] text-gray-600 mb-1">Tire foto da NFe com celular em PÉ (retrato). O sistema vai corrigir se sair deitada.</p>
+<input type="file" id="f-fotos-nf" accept="image/*" capture="environment" multiple class="w-full text-xs">
+<div id="preview-nf" class="flex gap-2 flex-wrap mt-2"></div>
+</div>
+
+<div class="border rounded-xl p-3"><b class="text-xs">✅ Conferência</b><div class="text-[12px] mt-2 space-y-1"><label class="flex gap-2"><input type="checkbox" class="chk-fisica" value="Qtd confere"> Qtd confere</label><label class="flex gap-2"><input type="checkbox" class="chk-fisica" value="Vol OK"> Vol OK</label></div></div>
+
+<div class="border rounded-xl p-3"><b class="text-xs">✍️ Assinaturas</b>
+<p class="text-[10px] mt-2">Conferente:</p><canvas id="sig-armazem" class="sig h-[90px]" width="400" height="90"></canvas><div class="flex gap-1 mt-1"><button onclick="limparSig('sig-armazem')" type="button" class="text-[10px] bg-gray-200 px-2 py-1 rounded">Limpar</button><input id="nome-armazem" placeholder="Nome conferente" class="flex-1 border rounded px-2 py-1 text-xs"></div>
+<p class="text-[10px] mt-2">Motorista:</p><canvas id="sig-mot" class="sig h-[90px]" width="400" height="90"></canvas><div class="flex gap-1 mt-1"><button onclick="limparSig('sig-mot')" type="button" class="text-[10px] bg-gray-200 px-2 py-1 rounded">Limpar</button><input id="nome-mot" placeholder="Nome motorista" class="flex-1 border rounded px-2 py-1 text-xs"></div>
+</div>
+
+<div class="bg-green-50 border-2 border-green-600 rounded-xl p-3 mt-4">
+<p class="text-[12px] font-black text-center mb-3 text-green-800">📧 ENVIAR 2 PDFs SEPARADOS</p>
+<button onclick="enviarGuiaEFotosEmail()" type="button" class="w-full bg-[#0028B4] text-white font-black rounded-xl py-4 text-[13px] mb-3">📧 ENVIAR POR EMAIL<br><span class="text-[10px] font-normal">1 Guia + 1 Fotos NF (2 PDFs juntos)</span></button>
+<button onclick="enviarGuiaEFotosWhats()" type="button" class="w-full bg-[#25D366] text-white font-black rounded-xl py-4 text-[13px]">📲 ENVIAR POR WHATSAPP<br><span class="text-[10px] font-normal">1 Guia + 1 Fotos NF (2 PDFs juntos)</span></button>
+</div>
+
+</div>
+</div>
+
+<div id="s-receipt" class="hidden flex-1 flex-col bg-[#F5F7FB] overflow-auto">
+<div class="bg-white p-3 flex justify-between border-b"><button onclick="showScreen('home')" class="text-[#0028B4] font-bold text-sm">← Início</button></div>
+<div class="p-3"><div class="bg-white rounded-xl border p-3"><p id="r-num" class="font-mono text-xs"></p><p id="r-cliente" class="text-sm font-bold"></p><p id="r-nf" class="text-xs"></p></div></div>
+</div>
+
+<div id="s-history" class="hidden flex-1 flex-col bg-[#F5F7FB]">
+<div class="bg-white p-3 border-b flex justify-between"><div class="flex gap-2 items-center"><button onclick="showScreen('home')" class="w-8 h-8 bg-gray-100 rounded-full">←</button><b class="text-sm">HISTÓRICO</b></div><button onclick="limparHistorico()" class="text-[10px] bg-red-100 px-2 py-1 rounded">Limpar</button></div>
+<div id="history-list" class="p-3 space-y-2"></div>
+</div>
+
+</div>
+
+<script>
+let recibos=[];try{recibos=JSON.parse(localStorage.getItem('impex_v12')||'[]')}catch(e){recibos=[]}
+let cur=null,fotosNFBase64=[],fotosNF=[],sigArmazemPad=null,sigMotPad=null;
+
+function genNum(){return 'COL-'+new Date().getFullYear()+'-'+String(1000+recibos.length+1).padStart(4,'0')}
+function login(){showScreen('home');renderHome()}
+function showScreen(s){
+  ['login','home','new','receipt','history'].forEach(k=>{const el=document.getElementById('s-'+k);if(el){el.classList.add('hidden');el.classList.remove('flex')}});
+  const t=document.getElementById('s-'+s);if(t){t.classList.remove('hidden');t.classList.add('flex')}
+  if(s==='new'){document.getElementById('f-num').value=genNum();document.getElementById('f-date').value=new Date().toLocaleString('pt-BR')}
+  if(s==='home')renderHome();
+  if(s==='history')renderHistory();
+}
+function renderHome(){
+  const list=document.getElementById('home-list');
+  if(recibos.length===0)list.innerHTML='<p class="text-[11px] text-gray-400 text-center py-6">Nenhuma entrega</p>';
+  else list.innerHTML=recibos.slice().reverse().map(r=>`<div class="bg-white rounded-xl p-3 border mb-2"><p class="font-mono text-[10px] text-[#0028B4]">${r.num} - NFe ${r.nf}</p><p class="text-xs">${r.cliente}</p></div>`).join('');
+  document.getElementById('stat-hoje').innerText=recibos.length+' entregas';
+}
+function renderHistory(){
+  document.getElementById('history-list').innerHTML=recibos.slice().reverse().map(r=>`<div class="bg-white rounded-xl p-3 border"><p class="font-mono text-[10px]">${r.num} | NFe ${r.nf}</p><p class="text-xs">${r.cliente}</p></div>`).join('');
+}
+function limparHistorico(){if(confirm('Apagar tudo?')){recibos=[];localStorage.setItem('impex_v12',JSON.stringify(recibos));renderHome();renderHistory()}}
+function saveRecibos(){localStorage.setItem('impex_v12',JSON.stringify(recibos))}
+
+function initSigs(){
+  const c1=document.getElementById('sig-armazem'); if(c1){const ctx=c1.getContext('2d');let d=false; c1.addEventListener('pointerdown',e=>{d=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY)}); c1.addEventListener('pointermove',e=>{if(!d)return;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke()}); c1.addEventListener('pointerup',()=>d=false)}
+  const c2=document.getElementById('sig-mot'); if(c2){const ctx=c2.getContext('2d');let d=false; c2.addEventListener('pointerdown',e=>{d=true;ctx.beginPath();ctx.moveTo(e.offsetX,e.offsetY)}); c2.addEventListener('pointermove',e=>{if(!d)return;ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke()}); c2.addEventListener('pointerup',()=>d=false)}
+}
+function limparSig(id){const c=document.getElementById(id); c.getContext('2d').clearRect(0,0,c.width,c.height)}
+
+// CORREÇÃO FOTO DEITADA - Função que corrige orientação da foto
+function corrigirFotoDeitada(base64, callback){
+  const img=new Image();
+  img.onload=function(){
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    let w=img.width, h=img.height;
+    // Se a foto foi tirada em pé mas o navegador salvou deitada (w > h), corrige rotacionando 90 graus
+    // Para NF, sempre queremos retrato (h > w)
+    if(w > h){
+      // Foto deitada - rotaciona 90 graus para ficar em pé
+      canvas.width=h; canvas.height=w;
+      ctx.translate(h/2, w/2);
+      ctx.rotate(90*Math.PI/180);
+      ctx.drawImage(img, -w/2, -h/2);
+    }else{
+      // Já está em pé
+      canvas.width=w; canvas.height=h;
+      ctx.drawImage(img,0,0);
+    }
+    callback(canvas.toDataURL('image/jpeg',0.8));
+  };
+  img.src=base64;
+}
+
+document.getElementById('f-fotos-nf').addEventListener('change',function(e){
+  const files=e.target.files;
+  const preview=document.getElementById('preview-nf');
+  preview.innerHTML='';
+  fotosNFBase64=[];
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      corrigirFotoDeitada(ev.target.result, function(corrigida){
+        fotosNFBase64.push(corrigida);
+        const img=document.createElement('img'); img.src=corrigida; img.className='photo-thumb'; preview.appendChild(img);
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function criarCurDoForm(){
+  const cliente=document.getElementById('f-cliente').value.trim();
+  const mot=document.getElementById('f-mot').value.trim();
+  const placa=document.getElementById('f-placa').value.trim();
+  const vol=document.getElementById('f-vol').value.trim();
+  const nf=document.getElementById('f-nf').value.trim();
+  if(!cliente||!mot||!placa||!vol||!nf){alert('Preencha Cliente, Motorista, Placa, Volumes, NFe');return null}
+  return{
+    num:document.getElementById('f-num').value,
+    date:document.getElementById('f-date').value,
+    cliente, cnpj:document.getElementById('f-cnpj').value,
+    mot, placa, vol, peso:document.getElementById('f-peso').value||'-',
+    nf, chave:document.getElementById('f-chave').value,
+    checkFisica:Array.from(document.querySelectorAll('.chk-fisica:checked')).map(c=>c.value),
+    fotosNF:[...fotosNFBase64],
+    sigArmazem:document.getElementById('sig-armazem').toDataURL('image/jpeg',0.5),
+    sigMot:document.getElementById('sig-mot').toDataURL('image/jpeg',0.5),
+    nomeArmazem:document.getElementById('nome-armazem').value||'Conf',
+    nomeMot:document.getElementById('nome-mot').value||mot
+  }
+}
+
+function gerarPDFGuiaSemFotos(){
+  const jsPDF=window.jspdf.jsPDF;
+  const doc=new jsPDF();
+  doc.setFillColor(0,40,180);doc.rect(0,0,210,28,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont('helvetica','bold');
+  doc.text('IMPEX FIVE IMPORTADORA',15,12);doc.setFontSize(7);doc.text('Av. das Rosas, 151 - SBC/SP',15,18);
+  doc.setTextColor(0,40,180);doc.setFontSize(14);doc.text('GUIA DE RECEBIMENTO - NFe',105,38,{align:'center'});
+  doc.setFontSize(11);doc.text(cur.num+' | NFe: '+cur.nf,105,44,{align:'center'});
+  doc.setTextColor(0,0,0);doc.setFontSize(9);let y=52;
+  doc.text('DATA: '+cur.date,15,y);y+=5;
+  doc.text('CLIENTE: '+(cur.cliente||'').substring(0,60),15,y);y+=5;
+  doc.text('CNPJ: '+(cur.cnpj||'-'),15,y);y+=5;
+  doc.text('MOT: '+cur.mot+' - PLACA: '+cur.placa+' - VOL: '+cur.vol,15,y);y+=6;
+  doc.text('CHAVE: '+(cur.chave||'-').substring(0,60),15,y);y+=6;
+  try{
+    if(cur.chave){
+      const c=document.createElement('canvas');
+      JsBarcode(c,cur.chave,{format:'CODE128',width:1.2,height:40,displayValue:false});
+      doc.addImage(c.toDataURL('image/png'),'PNG',15,y,100,15);y+=20;
+    }
+  }catch(e){}
+  try{
+    if(cur.sigArmazem)doc.addImage(cur.sigArmazem,'JPEG',15,y,60,18);
+    if(cur.sigMot)doc.addImage(cur.sigMot,'JPEG',110,y,60,18);
+    y+=20;
+    doc.text('Conf: '+(cur.nomeArmazem||''),15,y);doc.text('Mot: '+(cur.nomeMot||''),110,y);
+  }catch(e){}
+  return doc;
+}
+
+function enviarGuiaEFotos(tipo){
+  const r=criarCurDoForm(); if(!r)return; cur=r;
+  if(!cur.fotosNF||cur.fotosNF.length===0){alert('Tire foto da NF!');return;}
+  try{
+    const docGuia=gerarPDFGuiaSemFotos();
+    const fnGuia=cur.num+'-GUIA-'+cur.nf+'.pdf';
+    const fileGuia=new File([docGuia.output('blob')],fnGuia,{type:'application/pdf'});
+
+    const jsPDF=window.jspdf.jsPDF;
+    const docFotos=new jsPDF('p','mm','a4');
+    docFotos.setFillColor(0,40,180);docFotos.rect(0,0,210,20,'F');
+    docFotos.setTextColor(255,255,255);docFotos.setFontSize(12);docFotos.text('FOTOS DA NFe - '+cur.nf+' - EM PE',105,13,{align:'center'});
+    docFotos.setTextColor(0,0,0);docFotos.setFontSize(9);let y=28;
+    docFotos.text('Cliente: '+cur.cliente+' | '+cur.date,15,y);y+=8;
+    cur.fotosNF.forEach((s,i)=>{
+      if(y>150){docFotos.addPage();y=25;}
+      docFotos.setFontSize(9);docFotos.text('Foto '+(i+1)+' - NFe '+cur.nf,15,y);y+=5;
+      // PDF NF em PÉ - 90mm largura x 130mm altura (retrato), centralizado
+      try{
+        docFotos.addImage(s,'JPEG',55,y,100,130);
+        y+=135;
+      }catch(e){
+        try{docFotos.addImage(s,'PNG',55,y,100,130);y+=135;}catch(e2){}
+      }
+    });
+    const fnFotos='FOTOS-NF-'+cur.nf+'-'+cur.num+'.pdf';
+    const fileFotos=new File([docFotos.output('blob')],fnFotos,{type:'application/pdf'});
+
+    // Salva no histórico
+    recibos.push(cur);saveRecibos();
+
+    if(tipo==='email'){
+      if(navigator.canShare && navigator.canShare({files:[fileGuia,fileFotos]})){
+        navigator.share({files:[fileGuia,fileFotos],title:'Guia + Fotos NF '+cur.nf,text:'2 PDFs separados em PE - Guia + Fotos NF - Cliente:'+cur.cliente}).then(()=>alert('✅ 2 PDFs em PÉ enviados por email!')).catch(()=>{
+          docGuia.save(fnGuia); setTimeout(()=>docFotos.save(fnFotos),500);
+        });
+      }else{
+        docGuia.save(fnGuia); setTimeout(()=>docFotos.save(fnFotos),800);
+        setTimeout(()=>{
+          const subj=encodeURIComponent(cur.num+' - GUIA + FOTOS NF '+cur.nf+' - EM PE');
+          const body=encodeURIComponent('Seguem 2 PDFs em PE (retrato):\n1) '+fnGuia+' = GUIA\n2) '+fnFotos+' = FOTOS NF EM PE\nCliente: '+cur.cliente+'\nNFe: '+cur.nf);
+          window.location.href='mailto:?subject='+subj+'&body='+body;
+        },1500);
+      }
+    }else{
+      if(navigator.canShare && navigator.canShare({files:[fileGuia,fileFotos]})){
+        navigator.share({files:[fileGuia,fileFotos],title:'Guia + Fotos NF '+cur.nf,text:'IMPEX FIVE - '+cur.num+' - Cliente:'+cur.cliente+' - NFe:'+cur.nf}).catch(()=>{
+          docGuia.save(fnGuia); setTimeout(()=>docFotos.save(fnFotos),500);
+          window.open('https://wa.me/?text='+encodeURIComponent('IMPEX FIVE - '+cur.num+' - Cliente:'+cur.cliente+' - NFe:'+cur.nf+' - 2 PDFs em PE: Guia + Fotos NF'),'_blank');
+        });
+      }else{
+        docGuia.save(fnGuia); setTimeout(()=>docFotos.save(fnFotos),500);
+        setTimeout(()=>window.open('https://wa.me/?text='+encodeURIComponent('IMPEX FIVE - '+cur.num+' - Cliente:'+cur.cliente+' - NFe:'+cur.nf),'_blank'),1000);
+      }
+    }
+  }catch(err){alert('Erro: '+err.message);}
+}
+function enviarGuiaEFotosEmail(){enviarGuiaEFotos('email')}
+function enviarGuiaEFotosWhats(){enviarGuiaEFotos('whatsapp')}
+
+document.getElementById('f-num').value=genNum();
+document.getElementById('f-date').value=new Date().toLocaleString('pt-BR');
+window.addEventListener('load',()=>{initSigs();});
+</script>
+</body>
+</html>
