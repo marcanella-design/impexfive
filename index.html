@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMPEX FIVE - Entrega Simples</title>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f5f7fb}
+.app{max-width:480px;margin:0 auto;background:white;min-height:100vh}
+.hidden{display:none !important}
+.flex{display:flex !important}
+.login-bg{background:#0028B4;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:white;border-radius:16px;padding:20px;width:100%;max-width:360px}
+.login-card input{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;margin-top:8px;font-size:14px}
+.btn{width:100%;padding:12px;border:none;border-radius:10px;font-weight:900;cursor:pointer;text-align:center}
+.btn-red{background:#dc2626;color:white}
+.btn-blue{background:#0028B4;color:white}
+.btn-gray{background:#eee;color:#333}
+.content{padding:12px;display:flex;flex-direction:column;gap:12px}
+.card{border:1px solid #ddd;border-radius:12px;padding:12px}
+input, textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
+.sig{border:1px solid #ccc;border-radius:8px;background:white;width:100%;touch-action:none}
+.photo-thumb{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #ddd}
+.header{padding:12px;background:white;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- LOGIN -->
+<div id="s-login" class="login-bg">
+<div class="login-card">
+<h2 style="text-align:center;color:#0028B4;font-weight:900">IMPEX FIVE</h2>
+<p style="text-align:center;font-size:11px;color:#16a34a;margin-bottom:16px">SISTEMA SIMPLIFICADO - SEM CAMPOS EXTRAS</p>
+<input id="user" value="operador" placeholder="Usuário">
+<input id="pass" type="password" value="123456" placeholder="Senha">
+<button type="button" id="btn-entrar" class="btn btn-red" style="margin-top:12px">ENTRAR</button>
+<p style="font-size:10px;color:#666;margin-top:8px;text-align:center">Login: operador / 123456 - Clique em ENTRAR</p>
+</div>
+</div>
+
+<!-- HOME -->
+<div id="s-home" class="hidden" style="flex:1;flex-direction:column;background:#f5f7fb">
+<div class="header"><b style="color:#0028B4;font-size:12px">IMPEX FIVE - SIMPLES</b><span style="font-size:9px;background:#dcfce7;padding:4px 8px;border-radius:99px"></span></div>
+<div class="content">
+<button type="button" id="btn-nova" class="btn btn-blue" style="text-align:left;padding:16px"><b>📦 NOVA ENTREGA</b><br><span style="font-size:11px">Guia + Avarias + Assinaturas</span></button>
+<div style="margin-top:12px;display:flex;justify-content:space-between"><b style="font-size:11px">Histórico</b><button type="button" id="btn-limpar-hist" style="font-size:10px;background:#fee2e2;color:#dc2626;border:none;padding:4px 8px;border-radius:99px">Limpar</button></div>
+<div id="home-list" style="margin-top:8px"></div>
+</div>
+</div>
+
+<!-- NOVA ENTREGA - SIMPLIFICADO -->
+<div id="s-new" class="hidden" style="flex:1;flex-direction:column;background:white;overflow:auto">
+<div style="padding:12px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:center;position:sticky;top:0;background:white;z-index:10">
+<button type="button" id="btn-voltar" style="width:32px;height:32px;border-radius:99px;background:#eee;border:none">←</button>
+<b style="font-size:13px">NOVA ENTREGA - SIMPLES</b></div>
+<div class="content">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<input id="f-num" readonly style="background:#eee;font-family:monospace;font-size:11px">
+<input id="f-date" readonly style="background:#eee;font-size:10px">
+</div>
+<div><label style="font-size:10px;font-weight:700">RECEBIDO DIA/HORA:</label>
+<input id="f-recebido" type="datetime-local" style="margin-top:4px"></div>
+
+<!-- SEM NFe, SEM Cliente, SEM Contato, SEM Telefone, SEM Motorista, SEM Placa, SEM Qtd, SEM Peso, SEM Foto NF -->
+
+<div class="card"><b style="font-size:11px">✅ Conferência</b>
+<div style="font-size:13px;margin-top:8px;line-height:24px">
+<label><input type="checkbox" class="chk-fisica" value="Qtd confere"> Qtd confere</label><br>
+<label><input type="checkbox" class="chk-fisica" value="Volumes íntegros"> Volumes íntegros</label><br>
+<label><input type="checkbox" class="chk-fisica" value="Lacres OK"> Lacres OK</label>
+</div></div>
+
+
+<div class="card" style="border:2px solid #0028a8;background:#e3f2fd">
+<b style="font-size:12px;color:#0028a8">📄 FOTO DA NOTA FISCAL</b>
+<p style="font-size:10px;color:#333;margin:4px 0">Tire foto da NF - depois escolha: Excel ou PDF</p>
+<input type="file" id="f-foto-nf" accept="image/*" multiple style="margin-top:8px;background:white">
+<div id="preview-nf" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<button type="button" id="btn-nf-excel" onclick="lerNFExcel()" style="background:#107c41;color:white;padding:14px 8px;border:none;border-radius:8px;font-weight:bold;font-size:13px;display:none">📊 NF → EXCEL</button>
+<button type="button" id="btn-nf-pdf" onclick="gerarNFPDF()" style="background:#c0392b;color:white;padding:14px 8px;border:none;border-radius:8px;font-weight:bold;font-size:13px;display:none">📄 NF → PDF</button>
+</div>
+<div id="status-nf" style="margin-top:10px;font-size:12px;display:none;padding:10px;background:white;border-radius:6px;border:1px solid #0028a8"></div>
+<div id="preview-text-nf" style="margin-top:8px;max-height:120px;overflow:auto;border:1px solid #ccc;padding:8px;background:white;font-size:11px;white-space:pre-wrap;display:none"></div>
+</div>
+
+<div class="card"><b style="font-size:11px">📦 Avarias / Condição</b>
+<div style="margin-top:8px">
+<b style="font-size:10px">📸 Fotos Avarias:</b>
+<input type="file" id="f-fotos" accept="image/*" multiple style="margin-top:6px">
+<div id="preview-fotos" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+<textarea id="f-obs-avaria" style="height:90px;margin-top:10px" placeholder="Observação de avarias..."></textarea>
+</div></div>
+
+<div class="card"><b style="font-size:11px">✍️ Assinaturas</b>
+<p style="font-size:10px;margin-top:8px">Conferente:</p>
+<canvas id="sig-armazem" class="sig" width="400" height="120"></canvas>
+<div style="display:flex;gap:6px;margin-top:4px">
+<button type="button" onclick="limparSig('sig-armazem')" style="font-size:11px;background:#eee;padding:6px 10px;border-radius:6px;border:none">Limpar</button>
+<input id="nome-armazem" placeholder="Nome conferente" style="flex:1">
+</div>
+<p style="font-size:10px;margin-top:10px">Motorista:</p>
+<canvas id="sig-mot" class="sig" width="400" height="120"></canvas>
+<div style="display:flex;gap:6px;margin-top:4px">
+<button type="button" onclick="limparSig('sig-mot')" style="font-size:11px;background:#eee;padding:6px 10px;border-radius:6px;border:none">Limpar</button>
+<input id="nome-mot" placeholder="Nome motorista" style="flex:1">
+</div>
+</div>
+
+<div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:12px">
+<p style="font-size:11px;font-weight:900;text-align:center;color:#166534;margin-bottom:10px">📤 ENVIOS - ENVIOS</p>
+<button type="button" id="btn-guia-op" class="btn btn-blue" style="padding:16px">📦 GERAR GUIA DE RECEBIMENTO (PDF)<br><span style="font-size:10px;font-weight:400">Com avarias e assinaturas</span></button>
+<div style="margin-top:10px;border-top:1px dashed #16a34a;padding-top:10px">
+<button type="button" id="btn-limpar-form" class="btn btn-gray" style="padding:12px">🧹 LIMPAR FORMULÁRIO</button>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script>
+let recibos=[];
+try{recibos=JSON.parse(localStorage.getItem('impex_v39')||'[]');}catch(e){recibos=[]}
+let fotosAvarias=[]; try{fotosNF=[];}catch(e){} try{document.getElementById('preview-nf').innerHTML='';}catch(e){} try{document.getElementById('status-nf').style.display='none';}catch(e){} try{document.getElementById('preview-text-nf').style.display='none';}catch(e){} try{document.getElementById('btn-nf-excel').style.display='none';}catch(e){} try{document.getElementById('btn-nf-pdf').style.display='none';}catch(e){} try{document.getElementById('f-foto-nf').value='';}catch(e){}
+
+function genNum(){return 'ENT-'+new Date().getFullYear()+'-'+String(1000+recibos.length+1).padStart(4,'0')}
+function showScreen(s){
+ ['login','home','new'].forEach(k=>{
+ const el=document.getElementById('s-'+k);
+ if(el){el.classList.add('hidden');el.classList.remove('flex')}
+ });
+ const t=document.getElementById('s-'+s);
+ if(t){t.classList.remove('hidden');t.classList.add('flex')}
+ if(s==='new'){
+ document.getElementById('f-num').value=genNum();
+ document.getElementById('f-date').value=new Date().toLocaleString('pt-BR');
+ }
+ if(s==='home') renderHome();
+}
+function renderHome(){
+ const list=document.getElementById('home-list');
+ if(recibos.length===0) list.innerHTML='<p style="font-size:11px;color:#aaa;text-align:center;padding:20px">Nenhuma entrega</p>';
+ else list.innerHTML=recibos.slice().reverse().map(r=>`<div style="background:white;border-radius:10px;padding:10px;border:1px solid #eee;margin-bottom:6px"><p style="font-family:monospace;font-size:10px;color:#0028B4">${r.num}</p><p style="font-size:12px">${r.obs||'Sem obs'}</p><p style="font-size:10px;color:#888">${r.date}</p></div>`).join('');
+}
+function saveRecibos(){
+ try{localStorage.setItem('impex_v39', JSON.stringify(recibos.slice(-50)));}catch(e){}
+}
+function login(){
+ console.log('Login clicado');
+ showScreen('home');
+}
+function initSigs(){
+ ['sig-armazem','sig-mot'].forEach(id=>{
+ const c=document.getElementById(id);
+ if(!c) return;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,c.width,c.height);
+ ctx.lineWidth=2; ctx.strokeStyle='#000'; let d=false;
+ function pos(e){
+  const rect=c.getBoundingClientRect();
+  const x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+  const y=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;
+  return {x:x*(c.width/rect.width), y:y*(c.height/rect.height)}
+ }
+ c.addEventListener('mousedown',e=>{d=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y)});
+ c.addEventListener('mousemove',e=>{if(!d)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke()});
+ c.addEventListener('mouseup',()=>d=false);
+ c.addEventListener('mouseleave',()=>d=false);
+ c.addEventListener('touchstart',e=>{d=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault()},{passive:false});
+ c.addEventListener('touchmove',e=>{if(!d)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault()},{passive:false});
+ c.addEventListener('touchend',()=>d=false);
+ });
+}
+function limparSig(id){
+ const c=document.getElementById(id);
+ const ctx=c.getContext('2d');
+ ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,c.width,c.height);
+}
+function getSigWithWhiteBg(id){
+ const orig=document.getElementById(id);
+ const tmp=document.createElement('canvas');
+ tmp.width=orig.width; tmp.height=orig.height;
+ const tctx=tmp.getContext('2d');
+ tctx.fillStyle='#FFFFFF'; tctx.fillRect(0,0,tmp.width,tmp.height);
+ tctx.drawImage(orig,0,0);
+ return tmp.toDataURL('image/jpeg',0.9);
+}
+
+document.getElementById('f-fotos').addEventListener('change',function(e){
+ const files=e.target.files; const preview=document.getElementById('preview-fotos');
+ preview.innerHTML='Carregando...'; fotosAvarias=[]; try{fotosNF=[];}catch(e){} try{document.getElementById('preview-nf').innerHTML='';}catch(e){} try{document.getElementById('status-nf').style.display='none';}catch(e){} try{document.getElementById('preview-text-nf').style.display='none';}catch(e){} try{document.getElementById('btn-nf-excel').style.display='none';}catch(e){} try{document.getElementById('btn-nf-pdf').style.display='none';}catch(e){} try{document.getElementById('f-foto-nf').value='';}catch(e){} let loaded=0;
+ if(!files.length){preview.innerHTML='';return;}
+ Array.from(files).forEach(file=>{
+ const reader=new FileReader();
+ reader.onload=function(ev){
+  fotosAvarias.push(ev.target.result); loaded++;
+  if(loaded===files.length){
+  preview.innerHTML='';
+  fotosAvarias.forEach(src=>{const img=document.createElement('img'); img.src=src; img.className='photo-thumb'; preview.appendChild(img);});
+  }
+ };
+ reader.readAsDataURL(file);
+ });
+});
+
+function criarCurDoForm(){
+ const rdh=document.getElementById('f-recebido')?document.getElementById('f-recebido').value:'';
+ return{
+ num:document.getElementById('f-num').value,
+ date:document.getElementById('f-date').value,
+ recebidoDiaHora:rdh,
+ checkFisica:Array.from(document.querySelectorAll('.chk-fisica:checked')).map(el=>el.value),
+ obsAvaria:document.getElementById('f-obs-avaria').value||'Sem avarias',
+ fotosAvarias:[...fotosAvarias],
+ sigArmazem:getSigWithWhiteBg('sig-armazem'),
+ sigMot:getSigWithWhiteBg('sig-mot'),
+ nomeArmazem:document.getElementById('nome-armazem').value||'Conferente',
+ nomeMot:document.getElementById('nome-mot').value||'Motorista'
+ }
+}
+
+function gerarPDFGuiaSimples(){
+ const cur=criarCurDoForm();
+ try{
+ const jsPDF=window.jspdf.jsPDF; const doc=new jsPDF();
+ doc.setFillColor(0,40,180);doc.rect(0,0,210,28,'F');
+ doc.setTextColor(255,255,255);doc.setFontSize(14);doc.text('IMPEX FIVE - GUIA DE RECEBIMENTO',15,14);
+ doc.setFontSize(9);doc.text('SISTEMA SIMPLIFICADO - ',15,20);
+ doc.setTextColor(0,0,0);doc.setFontSize(10);let y=36;
+ doc.text('Recibo: '+cur.num,15,y); y+=6;
+ doc.text('Data: '+cur.date,15,y); y+=6;
+ let rdh=''; try{if(cur.recebidoDiaHora) rdh=new Date(cur.recebidoDiaHora).toLocaleString('pt-BR');}catch(e){rdh=cur.recebidoDiaHora}
+ doc.text('Recebido Dia/Hora: '+rdh,15,y); y+=8;
+ doc.setFontSize(11);doc.setFont('helvetica','bold');doc.text('Conferência Física:',15,y); y+=6; doc.setFont('helvetica','normal');doc.setFontSize(10);
+ doc.text((cur.checkFisica.length?cur.checkFisica.join(', '):'Nenhuma conferência marcada'),15,y); y+=8;
+ doc.setFont('helvetica','bold');doc.text('Avarias / Observação:',15,y); y+=6; doc.setFont('helvetica','normal');
+ const obsLines=doc.splitTextToSize(cur.obsAvaria||'Sem avarias', 180);
+ doc.text(obsLines,15,y); y+=obsLines.length*5+6;
+ try{
+  if(cur.sigArmazem){doc.addImage(cur.sigArmazem,'JPEG',15,y,60,20); doc.text('Conf: '+cur.nomeArmazem,15,y+24);}
+  if(cur.sigMot){doc.addImage(cur.sigMot,'JPEG',110,y,60,20); doc.text('Mot: '+cur.nomeMot,110,y+24);}
+  y+=32;
+ }catch(e){}
+ if(cur.fotosAvarias && cur.fotosAvarias.length>0){
+  doc.addPage(); y=12; doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('FOTOS AVARIAS - '+cur.fotosAvarias.length+' foto(s)',15,y); y+=8; doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  cur.fotosAvarias.forEach((s,idx)=>{
+  if(y>150){doc.addPage();y=15;}
+  try{ doc.text('Foto '+(idx+1),15,y); y+=4; doc.addImage(s,'JPEG',15,y,80,60); y+=66; }catch(e2){ y+=10; }
+  });
+ }
+ return doc;
+ }catch(err){alert('Erro guia: '+err.message);return null;}
+}
+
+function enviarGuiaParaOperacional(){
+ const r=criarCurDoForm();
+ try{
+ const docGuia=gerarPDFGuiaSimples(); if(!docGuia) return;
+ const fnGuia=r.num+'-GUIA-SIMPLES.pdf';
+ const fileGuia=new File([docGuia.output('blob')], fnGuia, {type:'application/pdf'});
+ try{recibos.push({num:r.num, date:r.date, obs:r.obsAvaria}); saveRecibos();}catch(e){}
+ if(navigator.canShare && navigator.canShare({files:[fileGuia]})){
+  navigator.share({files:[fileGuia], title:'Guia Simples '+r.num, text:'Guia de Recebimento - '+r.num}).then(()=>alert('✅ Guia enviada!')).catch(()=>{docGuia.save(fnGuia);});
+ }else{
+  docGuia.save(fnGuia);
+  alert('✅ PDF Gerado: '+fnGuia+'\nSalvo na pasta Downloads');
+ }
+ }catch(err){alert('Erro Guia: '+err.message);}
+}
+
+
+let fotosNF=[];
+let produtosNF=[];
+let ultimoExcelBlob=null;
+let ultimoExcelNome='';
+let ultimoPDFBlob=null;
+let ultimoPDFNome='';
+
+document.getElementById('f-foto-nf')?.addEventListener('change', function(e){
+  fotosNF=[];
+  const prev=document.getElementById('preview-nf');
+  const btnE=document.getElementById('btn-nf-excel');
+  const btnP=document.getElementById('btn-nf-pdf');
+  prev.innerHTML='';
+  const files=e.target.files;
+  if(!files || files.length===0){ btnE.style.display='none'; btnP.style.display='none'; return; }
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      fotosNF.push(ev.target.result);
+      const img=document.createElement('img');
+      img.src=ev.target.result;
+      img.style.width='90px'; img.style.height='90px'; img.style.objectFit='cover'; img.style.borderRadius='8px'; img.style.border='2px solid #0028a8';
+      prev.appendChild(img);
+      btnE.style.display='block';
+      btnP.style.display='block';
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+async function lerNFExcel(){
+  const status=document.getElementById('status-nf');
+  const preview=document.getElementById('preview-text-nf');
+  const btn=document.getElementById('btn-nf-excel');
+  status.style.display='block'; preview.style.display='block';
+  if(fotosNF.length===0){ alert('Tire foto da NF primeiro!'); return; }
+  btn.disabled=true; btn.textContent='⏳ LENDO...';
+  status.innerHTML='🔍 Lendo NF com OCR... 20-40s';
+  status.style.background='#fff3e0';
+  try{
+    let textoTotal='';
+    for(let i=0;i<fotosNF.length;i++){
+      status.innerHTML='🔍 Lendo NF '+(i+1)+'/'+fotosNF.length+'...';
+      const result = await Tesseract.recognize(fotosNF[i], 'por', { logger: m=>{ if(m.status==='recognizing text'){ status.innerHTML='🔍 Lendo NF '+(i+1)+': '+Math.round(m.progress*100)+'%'; } } });
+      textoTotal+= result.data.text + '\n---\n';
+    }
+    preview.textContent=textoTotal;
+    const linhas=textoTotal.split('\n').map(l=>l.trim()).filter(l=>l.length>3);
+    const produtos=[]; let contador=1;
+    linhas.forEach(linha=>{
+      const lower=linha.toLowerCase();
+      if(lower.includes('cnpj') && linha.length<60) return;
+      if(lower.includes('base de calculo') || lower.includes('valor total da nota')) return;
+      if(linha.length<5) return;
+      if(/[a-zA-Z]{3,}/.test(linha) && /\d/.test(linha)){
+        let qtd='1'; const nums=linha.match(/\d+[.,]?\d*/g); if(nums && nums.length>=2) qtd=nums[nums.length-2]||'1';
+        let codigo=''; const codMatch=linha.match(/^([0-9]{3,13})\s+/); if(codMatch) codigo=codMatch[1];
+        produtos.push({item:contador++, descricao:linha.substring(0,90), quantidade:qtd, codigo:codigo, original:linha});
+      }
+    });
+    if(produtos.length===0){ linhas.forEach((linha,idx)=>{ if(linha.length>5) produtos.push({item:idx+1, descricao:linha.substring(0,90), quantidade:1, codigo:'', original:linha}); }); }
+    produtosNF=produtos;
+    const ws_data=[['IMPEX FIVE - NF EM EXCEL'],['Data: '+new Date().toLocaleString('pt-BR')],[],['Item','Codigo','Descricao NF','Qtd','Original']];
+    produtos.forEach(p=>{ ws_data.push([p.item, p.codigo||'', p.descricao, p.quantidade, p.original]); });
+    ws_data.push([]); ws_data.push(['Total Itens', produtos.length]);
+    const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(ws_data); ws['!cols']=[{wch:6},{wch:15},{wch:45},{wch:10},{wch:60}];
+    XLSX.utils.book_append_sheet(wb, ws, 'NF');
+    const fileName='NF-EXCEL-'+new Date().toISOString().slice(0,10)+'.xlsx';
+    const wbout=XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    ultimoExcelBlob=new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    ultimoExcelNome=fileName;
+    XLSX.writeFile(wb, fileName);
+    status.innerHTML='✅ <b>NF → EXCEL!</b><br>📄 '+fileName+'<br>📦 '+produtos.length+' itens<br><br><button onclick="baixarExcelNF()" style="background:#107c41;color:white;padding:8px 12px;border:none;border-radius:6px;margin:2px">📥 Baixar novamente</button><br><br><button onclick="enviarExcelEmail()" style="background:#d35400;color:white;padding:10px 16px;border:none;border-radius:8px;width:100%;margin:2px;font-weight:bold">📧 ENVIAR EXCEL POR EMAIL</button><button onclick="enviarExcelWhats()" style="background:#25D366;color:white;padding:10px 16px;border:none;border-radius:8px;width:100%;margin:2px;font-weight:bold">📲 WHATSAPP EXCEL</button>';
+    status.style.background='#e8f5e9'; btn.disabled=false; btn.textContent='📊 NF → EXCEL';
+  }catch(err){ status.innerHTML='❌ Erro: '+err.message; status.style.background='#ffebee'; btn.disabled=false; btn.textContent='📊 TENTAR NOVAMENTE'; }
+}
+function baixarExcelNF(){ if(!produtosNF.length){ alert('Leia NF primeiro!'); return; } const ws_data=[['NF EXCEL'],[],['Item','Codigo','Descricao','Qtd']]; produtosNF.forEach(p=>ws_data.push([p.item,p.codigo,p.descricao,p.quantidade])); const wb=XLSX.utils.book_new(); const ws=XLSX.utils.aoa_to_sheet(ws_data); XLSX.utils.book_append_sheet(wb,ws,'NF'); XLSX.writeFile(wb,'NF-'+Date.now()+'.xlsx'); }
+function enviarExcelEmail(){ if(!ultimoExcelBlob){ alert('Gere Excel primeiro!'); return; } const file=new File([ultimoExcelBlob], ultimoExcelNome, {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}); if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file], title:'Excel NF', text:'Segue Excel da NF'}).then(()=>alert('✅ Enviado!')).catch(()=>baixarExcelNF()); }else{ baixarExcelNF(); setTimeout(()=>{ window.location.href='mailto:?subject='+encodeURIComponent('EXCEL NF')+'&body='+encodeURIComponent('Segue Excel da NF'); },800); } }
+function enviarExcelWhats(){ if(!ultimoExcelBlob){ alert('Gere Excel primeiro!'); return; } const file=new File([ultimoExcelBlob], ultimoExcelNome, {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}); if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file], title:'Excel NF'}).catch(()=>baixarExcelNF()); }else{ baixarExcelNF(); } }
+
+function gerarNFPDF(){
+  const status=document.getElementById('status-nf'); status.style.display='block';
+  if(fotosNF.length===0){ alert('Tire foto da NF primeiro!'); return; }
+  try{
+    const jsPDF=window.jspdf.jsPDF; const doc=new jsPDF();
+    doc.setFillColor(0,40,180); doc.rect(0,0,210,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(13); doc.text('NOTA FISCAL',105,13,{align:'center'});
+    doc.setTextColor(0,0,0); doc.setFontSize(9); let y=28; doc.text('Data: '+new Date().toLocaleString('pt-BR'),15,y); y+=8;
+    fotosNF.forEach((s,idx)=>{
+      if(y>100){ doc.addPage(); y=15; }
+      doc.setFontSize(8); doc.text('Foto NF '+(idx+1),15,y); y+=4;
+      try{ const p=doc.getImageProperties(s); let w=170,h=110; if(p.width < p.height){ w=90; h=120; } doc.addImage(s,'JPEG',15,y,w,h); y+=h+8; }catch(e){ try{ doc.addImage(s,'PNG',15,y,170,110); y+=118; }catch(e2){} }
+    });
+    const fn='NF-PDF-'+new Date().toISOString().slice(0,10)+'.pdf';
+    ultimoPDFBlob=doc.output('blob'); ultimoPDFNome=fn;
+    status.innerHTML='✅ <b>NF → PDF!</b><br>📄 '+fn+'<br>📸 '+fotosNF.length+' fotos<br><br><button onclick="gerarNFPDF()" style="background:#c0392b;color:white;padding:8px 14px;border:none;border-radius:6px;width:100%;margin:2px;font-weight:bold">📄 GERAR PDF NOVAMENTE</button><br><button onclick="enviarPDFEmail()" style="background:#d35400;color:white;padding:10px 16px;border:none;border-radius:8px;width:100%;margin:2px;font-weight:bold">📧 ENVIAR PDF POR EMAIL</button><button onclick="enviarPDFWhats()" style="background:#25D366;color:white;padding:10px 16px;border:none;border-radius:8px;width:100%;margin:2px;font-weight:bold">📲 WHATSAPP PDF</button>';
+    status.style.background='#fce4ec';
+    doc.save(fn);
+  }catch(err){ alert('Erro PDF: '+err.message); }
+}
+function enviarPDFEmail(){ if(!ultimoPDFBlob){ alert('Gere PDF primeiro!'); return; } const file=new File([ultimoPDFBlob], ultimoPDFNome, {type:'application/pdf'}); if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file], title:'PDF NF', text:'PDF da NF'}).then(()=>alert('✅ PDF enviado!')).catch(()=>{}); }else{ let a=document.createElement('a'); a.href=URL.createObjectURL(ultimoPDFBlob); a.download=ultimoPDFNome; a.click(); } }
+function enviarPDFWhats(){ if(!ultimoPDFBlob){ alert('Gere PDF primeiro!'); return; } const file=new File([ultimoPDFBlob], ultimoPDFNome, {type:'application/pdf'}); if(navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file], title:'PDF NF'}).catch(()=>{}); } }
+
+
+function limparFormulario(){
+ if(!confirm('Limpar formulário?')) return;
+ document.getElementById('f-obs-avaria').value='';
+ document.querySelectorAll('.chk-fisica').forEach(c=>c.checked=false);
+ document.getElementById('f-fotos').value='';
+ document.getElementById('preview-fotos').innerHTML='';
+ fotosAvarias=[]; try{fotosNF=[];}catch(e){} try{document.getElementById('preview-nf').innerHTML='';}catch(e){} try{document.getElementById('status-nf').style.display='none';}catch(e){} try{document.getElementById('preview-text-nf').style.display='none';}catch(e){} try{document.getElementById('btn-nf-excel').style.display='none';}catch(e){} try{document.getElementById('btn-nf-pdf').style.display='none';}catch(e){} try{document.getElementById('f-foto-nf').value='';}catch(e){}
+ limparSig('sig-armazem'); limparSig('sig-mot');
+ document.getElementById('nome-armazem').value='';
+ document.getElementById('nome-mot').value='';
+ document.getElementById('f-num').value=genNum();
+ document.getElementById('f-date').value=new Date().toLocaleString('pt-BR');
+ if(document.getElementById('f-recebido')) document.getElementById('f-recebido').value='';
+ alert('✅ Limpo! Pronto para nova entrega.');
+}
+
+window.addEventListener('load',()=>{
+ initSigs();
+ try{document.getElementById('f-num').value=genNum();document.getElementById('f-date').value=new Date().toLocaleString('pt-BR');}catch(e){}
+ document.getElementById('btn-entrar').addEventListener('click', login);
+ document.getElementById('btn-nova').addEventListener('click', ()=>showScreen('new'));
+ document.getElementById('btn-voltar').addEventListener('click', ()=>showScreen('home'));
+ document.getElementById('btn-guia-op').addEventListener('click', enviarGuiaParaOperacional);
+ document.getElementById('btn-limpar-form').addEventListener('click', limparFormulario);
+ document.getElementById('btn-limpar-hist').addEventListener('click', ()=>{if(confirm('Limpar histórico?')){recibos=[];localStorage.clear();renderHome();}});
+ // Enter no login
+ document.getElementById('pass').addEventListener('keydown', e=>{if(e.key==='Enter') login()});
+ document.getElementById('user').addEventListener('keydown', e=>{if(e.key==='Enter') login()});
+ console.log('App carregado - ');
+});
+</script>
+</body>
+</html>
